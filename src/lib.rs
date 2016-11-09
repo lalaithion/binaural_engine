@@ -1,12 +1,10 @@
-extern crate portaudio;
-
 mod sound_const {
     /* All of the constants in this library use standard metric units with no prefixes. */
     pub const SOUND_SPEED: f64 = 343.0; //Speed of Sound in m/s
     pub const SAMPLE_RATE: u32 = 44100; //Default sample rate in Hz
 }
 
-pub mod sound_types {
+pub mod sound_basics {
     use sound_const::*;
     #[derive(Clone, Copy)]
     pub struct Position {
@@ -16,20 +14,21 @@ pub mod sound_types {
     }
     #[derive(Clone, Copy)]
     pub struct Sound {
-        sample: f64,
-        location: Position,
+        pub sample: f64,
+        pub location: Position,
     }
     #[derive(Clone, Copy)]
     pub struct Stereo {
-        left: f64,
-        right: f64,
+        pub left: f64,
+        pub right: f64,
     }
     #[derive(Clone, Copy)]
     struct Untimed {
         sample: f64,
         time: f64,
     }
-    fn position(x: f64, y: f64, z: f64) -> Position {
+    //
+    pub fn position(x: f64, y: f64, z: f64) -> Position {
         Position{x: x, y: y, z: z}
     }
     //Computes the distance between two points in R^3
@@ -101,11 +100,26 @@ pub mod sound_types {
         }
         ret
     }
-    //
+    //Takes a sound vector and a listener position and it returns a vector of stereo objects
     pub fn transform(sound: Vec<Sound>, listener: Position) -> Vec<Stereo> {
         let left_ear = Position{x: listener.x - 0.05, y: listener.y, z: listener.z};
         let right_ear = Position{x: listener.x + 0.05, y: listener.y, z: listener.z};
         zip(delay_transform(&loudness_transform(&sound,left_ear),left_ear),
             delay_transform(&loudness_transform(&sound,right_ear),right_ear))
+    }
+}
+
+pub mod sound_interface {
+    use sound_basics::*;
+    pub fn static_sound(lloc: (f64,f64,f64), sound: Vec<f64>, sloc: (f64,f64,f64)) -> (Vec<f64>,Vec<f64>) {
+        let listener = position(lloc.0, lloc.1, lloc.2);
+        let source = position(sloc.0, sloc.1, sloc.2);
+        let soundpos: Vec<Sound> = sound.iter().map(|s| Sound{sample: *s, location: source}).collect();
+        transform(soundpos, listener).iter().fold(
+            (Vec::<f64>::new(), Vec::<f64>::new()), |(mut l,mut r), s| {l.push(s.left); r.push(s.right); (l,r)}
+        )
+    }
+    pub fn moving_sound(loc: (f64,f64,f64), sound: Vec<f64>, startp: (f64,f64,f64), endp: (f64,f64,f64)) -> Vec<f64> {
+        unimplemented!();
     }
 }

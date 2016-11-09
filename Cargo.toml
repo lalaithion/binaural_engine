@@ -4,4 +4,4 @@ version = "0.0.1"
 authors = ["Izaak Weiss <izwe5504@colorado.edu>"]
 
 [dependencies]
-portaudio = "0.7.0"
+hound = "2.0.0"
